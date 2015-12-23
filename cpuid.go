@@ -10,7 +10,9 @@
 // Package home: https://github.com/klauspost/cpuid
 package cpuid
 
-import "strings"
+import (
+	"strings"
+)
 
 // Vendor is a representation of a CPU vendor.
 type Vendor int
@@ -19,6 +21,13 @@ const (
 	Other Vendor = iota
 	Intel
 	AMD
+	VIA
+	Transmeta
+	NSC
+	KVM  // Kernel-based Virtual Machine
+	MSVM // Microsoft Hyper-V or Windows Virtual PC
+	VMware
+	XenHVM
 )
 
 const (
@@ -45,6 +54,7 @@ const (
 	BMI2                    // Bit Manipulation Instruction Set 2
 	TBM                     // AMD Trailing Bit Manipulation
 	LZCNT                   // LZCNT instruction
+	POPCNT                  // POPCNT instruction
 	AESNI                   // Advanced Encryption Standard New Instructions
 	CLMUL                   // Carry-less Multiplication
 	HTT                     // Hyperthreading (enabled)
@@ -65,6 +75,8 @@ const (
 	AVX512VBMI              // AVX-512 Vector Bit Manipulation Instructions
 	MPX                     // Intel MPX (Memory Protection Extensions)
 	ERMS                    // Enhanced REP MOVSB/STOSB
+	RDTSCP                  // RDTSCP Instruction
+	CX16                    // CMPXCHG16B Instruction
 
 	// Performance indicators
 	SSE2SLOW // SSE2 is supported, but usually not faster
@@ -84,6 +96,7 @@ var flagNames = map[Flags]string{
 	SSE3:        "SSE3",        // Prescott SSE3 functions
 	SSSE3:       "SSSE3",       // Conroe SSSE3 functions
 	SSE4:        "SSE4.1",      // Penryn SSE4.1 functions
+	SSE4A:       "SSE4A",       // AMD Barcelona microarchitecture SSE4a instructions
 	SSE42:       "SSE4.2",      // Nehalem SSE4.2 functions
 	AVX:         "AVX",         // AVX functions
 	AVX2:        "AVX2",        // AVX functions
@@ -95,6 +108,7 @@ var flagNames = map[Flags]string{
 	BMI2:        "BMI2",        // Bit Manipulation Instruction Set 2
 	TBM:         "TBM",         // AMD Trailing Bit Manipulation
 	LZCNT:       "LZCNT",       // LZCNT instruction
+	POPCNT:      "POPCNT",      // POPCNT instruction
 	AESNI:       "AESNI",       // Advanced Encryption Standard New Instructions
 	CLMUL:       "CLMUL",       // Carry-less Multiplication
 	HTT:         "HTT",         // Hyperthreading (enabled)
@@ -115,6 +129,8 @@ var flagNames = map[Flags]string{
 	AVX512VBMI:  "AVX512VBMI",  // AVX-512 Vector Bit Manipulation Instructions
 	MPX:         "MPX",         // Intel MPX (Memory Protection Extensions)
 	ERMS:        "ERMS",        // Enhanced REP MOVSB/STOSB
+	RDTSCP:      "RDTSCP",      // RDTSCP Instruction
+	CX16:        "CX16",        // CMPXCHG16B Instruction
 
 	// Performance indicators
 	SSE2SLOW: "SSE2SLOW", // SSE2 supported, but usually not faster
@@ -134,7 +150,20 @@ type CPUInfo struct {
 	Family         int    // CPU family number
 	Model          int    // CPU model number
 	CacheLine      int    // Cache line size in bytes. Will be 0 if undetectable.
+	Cache          struct {
+		L1I int // L1 Instruction Cache (per core or shared). Will be -1 if undetected
+		L1D int // L1 Data Cache (per core or shared). Will be -1 if undetected
+		L2  int // L2 Cache (per core or shared). Will be -1 if undetected
+		L3  int // L3 Instruction Cache (per core or shared). Will be -1 if undetected
+	}
+	maxFunc   uint32
+	maxExFunc uint32
 }
+
+var cpuid func(op uint32) (eax, ebx, ecx, edx uint32)
+var cpuidex func(op, op2 uint32) (eax, ebx, ecx, edx uint32)
+var xgetbv func(index uint32) (eax, edx uint32)
+var rdtscpAsm func() (eax, ebx, ecx, edx uint32)
 
 // CPU contains information about the CPU as detected on startup,
 // or when Detect last was called.
@@ -144,6 +173,7 @@ type CPUInfo struct {
 var CPU CPUInfo
 
 func init() {
+	initCPU()
 	Detect()
 }
 
@@ -155,6 +185,8 @@ func init() {
 // If you call this, you must ensure that no other goroutine is accessing the
 // exported CPU variable.
 func Detect() {
+	CPU.maxFunc = maxFunctionID()
+	CPU.maxExFunc = maxExtendedFunction()
 	CPU.BrandName = brandName()
 	CPU.CacheLine = cacheLine()
 	CPU.Family, CPU.Model = familyModel()
@@ -163,6 +195,7 @@ func Detect() {
 	CPU.LogicalCores = logicalCores()
 	CPU.PhysicalCores = physicalCores()
 	CPU.VendorID = vendorID()
+	CPU.cacheSize()
 }
 
 // Generated here: http://play.golang.org/p/BxFH2Gdc0G
@@ -273,6 +306,11 @@ func (c CPUInfo) TBM() bool {
 // Lzcnt indicates support of LZCNT instruction
 func (c CPUInfo) Lzcnt() bool {
 	return c.Features&LZCNT != 0
+}
+
+// Popcnt indicates support of POPCNT instruction
+func (c CPUInfo) Popcnt() bool {
+	return c.Features&POPCNT != 0
 }
 
 // HTT indicates the processor has Hyperthreading enabled
@@ -397,6 +435,14 @@ func (c CPUInfo) ERMS() bool {
 	return c.Features&ERMS != 0
 }
 
+func (c CPUInfo) RDTSCP() bool {
+	return c.Features&RDTSCP != 0
+}
+
+func (c CPUInfo) CX16() bool {
+	return c.Features&CX16 != 0
+}
+
 // Atom indicates an Atom processor
 func (c CPUInfo) Atom() bool {
 	return c.Features&ATOM != 0
@@ -410,6 +456,67 @@ func (c CPUInfo) Intel() bool {
 // AMD returns true if vendor is recognized as AMD
 func (c CPUInfo) AMD() bool {
 	return c.VendorID == AMD
+}
+
+// Transmeta returns true if vendor is recognized as Transmeta
+func (c CPUInfo) Transmeta() bool {
+	return c.VendorID == Transmeta
+}
+
+// NSC returns true if vendor is recognized as National Semiconductor
+func (c CPUInfo) NSC() bool {
+	return c.VendorID == NSC
+}
+
+// VIA returns true if vendor is recognized as VIA
+func (c CPUInfo) VIA() bool {
+	return c.VendorID == VIA
+}
+
+// RTCounter returns the 64-bit time-stamp counter
+// Uses the RDTSCP instruction. The value 0 is returned
+// if the CPU does not support the instruction.
+func (c CPUInfo) RTCounter() uint64 {
+	if !c.RDTSCP() {
+		return 0
+	}
+	a, _, _, d := rdtscpAsm()
+	return uint64(a) | (uint64(d) << 32)
+}
+
+// Ia32TscAux returns the IA32_TSC_AUX part of the RDTSCP.
+// This variable is OS dependent, but on Linux contains information
+// about the current cpu/core the code is running on.
+// If the RDTSCP instruction isn't supported on the CPU, the value 0 is returned.
+func (c CPUInfo) Ia32TscAux() uint32 {
+	if !c.RDTSCP() {
+		return 0
+	}
+	_, _, ecx, _ := rdtscpAsm()
+	return ecx
+}
+
+// LogicalCPU will return the Logical CPU the code is currently executing on.
+// This is likely to change when the OS re-schedules the running thread
+// to another CPU.
+// If the current core cannot be detected, -1 will be returned.
+func (c CPUInfo) LogicalCPU() int {
+	if c.maxFunc < 1 {
+		return -1
+	}
+	_, ebx, _, _ := cpuid(1)
+	return int(ebx >> 24)
+}
+
+// VM Will return true if the cpu id indicates we are in
+// a virtual machine. This is only a hint, and will very likely
+// have many false negatives.
+func (c CPUInfo) VM() bool {
+	switch c.VendorID {
+	case MSVM, KVM, VMware, XenHVM:
+		return true
+	}
+	return false
 }
 
 // Flags contains detected cpu features and caracteristics
@@ -447,30 +554,60 @@ func maxFunctionID() uint32 {
 
 func brandName() string {
 	if maxExtendedFunction() >= 0x80000004 {
-		name := make([]byte, 0, 64)
+		v := make([]uint32, 0, 48)
 		for i := uint32(0); i < 3; i++ {
 			a, b, c, d := cpuid(0x80000002 + i)
-			name = append(name, valAsString(a, b, c, d)...)
+			v = append(v, a, b, c, d)
 		}
-		return strings.Trim(string(name), " ")
+		return strings.Trim(string(valAsString(v...)), " ")
 	}
 	return "unknown"
 }
 
 func threadsPerCore() int {
-	if maxFunctionID() < 0xb {
+	mfi := maxFunctionID()
+	if mfi < 0x4 || vendorID() != Intel {
 		return 1
 	}
 
+	if mfi < 0xb {
+		_, b, _, d := cpuid(1)
+		if (d & (1 << 28)) != 0 {
+			// v will contain logical core count
+			v := (b >> 16) & 255
+			if v > 1 {
+				a4, _, _, _ := cpuid(4)
+				// physical cores
+				v2 := (a4 >> 26) + 1
+				if v2 > 0 {
+					return int(v) / int(v2)
+				}
+			}
+		}
+		return 1
+	}
 	_, b, _, _ := cpuidex(0xb, 0)
+	if b&0xffff == 0 {
+		return 1
+	}
 	return int(b & 0xffff)
 }
 
 func logicalCores() int {
+	mfi := maxFunctionID()
 	switch vendorID() {
 	case Intel:
-		if maxFunctionID() < 0xb {
-			return 0
+		// Use this on old Intel processors
+		if mfi < 0xb {
+			if mfi < 1 {
+				return 0
+			}
+			// CPUID.1:EBX[23:16] represents the maximum number of addressable IDs (initial APIC ID)
+			// that can be assigned to logical processors in a physical package.
+			// The value may not be the same as the number of logical processors that are present in the hardware of a physical package.
+			_, ebx, _, _ := cpuid(1)
+			logical := (ebx >> 16) & 0xff
+			return int(logical)
 		}
 		_, b, _, _ := cpuidex(0xb, 1)
 		return int(b & 0xffff)
@@ -497,22 +634,38 @@ func physicalCores() int {
 	case Intel:
 		return logicalCores() / threadsPerCore()
 	case AMD:
-		_, _, c, _ := cpuid(0x80000008)
-		return int(c&0xff) + 1
-	default:
-		return 0
+		if maxExtendedFunction() >= 0x80000008 {
+			_, _, c, _ := cpuid(0x80000008)
+			return int(c&0xff) + 1
+		}
 	}
+	return 0
+}
+
+// Except from http://en.wikipedia.org/wiki/CPUID#EAX.3D0:_Get_vendor_ID
+var vendorMapping = map[string]Vendor{
+	"AMDisbetter!": AMD,
+	"AuthenticAMD": AMD,
+	"CentaurHauls": VIA,
+	"GenuineIntel": Intel,
+	"TransmetaCPU": Transmeta,
+	"GenuineTMx86": Transmeta,
+	"Geode by NSC": NSC,
+	"VIA VIA VIA ": VIA,
+	"KVMKVMKVMKVM": KVM,
+	"Microsoft Hv": MSVM,
+	"VMwareVMware": VMware,
+	"XenVMMXenVMM": XenHVM,
 }
 
 func vendorID() Vendor {
 	_, b, c, d := cpuid(0)
-	if b == 0x756e6547 && d == 0x49656e69 && c == 0x6c65746e {
-		return Intel
-	} else if b == 0x68747541 && d == 0x69746e65 && c == 0x444d4163 {
-		return AMD
-	} else {
+	v := valAsString(b, d, c)
+	vend, ok := vendorMapping[string(v)]
+	if !ok {
 		return Other
 	}
+	return vend
 }
 
 func cacheLine() int {
@@ -530,13 +683,78 @@ func cacheLine() int {
 	return int(cache)
 }
 
+func (c *CPUInfo) cacheSize() {
+	c.Cache.L1D = -1
+	c.Cache.L1I = -1
+	c.Cache.L2 = -1
+	c.Cache.L3 = -1
+	vendor := vendorID()
+	switch vendor {
+	case Intel:
+		if maxFunctionID() < 4 {
+			return
+		}
+		for i := uint32(0); ; i++ {
+			eax, ebx, ecx, _ := cpuidex(4, i)
+			cacheType := eax & 15
+			if cacheType == 0 {
+				break
+			}
+			cacheLevel := (eax >> 5) & 7
+			coherency := int(ebx&0xfff) + 1
+			partitions := int((ebx>>12)&0x3ff) + 1
+			associativity := int((ebx>>22)&0x3ff) + 1
+			sets := int(ecx) + 1
+			size := associativity * partitions * coherency * sets
+			switch cacheLevel {
+			case 1:
+				if cacheType == 1 {
+					// 1 = Data Cache
+					c.Cache.L1D = size
+				} else if cacheType == 2 {
+					// 2 = Instruction Cache
+					c.Cache.L1I = size
+				} else {
+					if c.Cache.L1D < 0 {
+						c.Cache.L1I = size
+					}
+					if c.Cache.L1I < 0 {
+						c.Cache.L1I = size
+					}
+				}
+			case 2:
+				c.Cache.L2 = size
+			case 3:
+				c.Cache.L3 = size
+			}
+		}
+	case AMD:
+		// Untested.
+		if maxExtendedFunction() < 0x80000005 {
+			return
+		}
+		_, _, ecx, edx := cpuid(0x80000005)
+		c.Cache.L1D = int(((ecx >> 24) & 0xFF) * 1024)
+		c.Cache.L1I = int(((edx >> 24) & 0xFF) * 1024)
+
+		if maxExtendedFunction() < 0x80000006 {
+			return
+		}
+		_, _, ecx, _ = cpuid(0x80000006)
+		c.Cache.L2 = int(((ecx >> 16) & 0xFFFF) * 1024)
+	}
+
+	return
+}
+
 func support() Flags {
 	mfi := maxFunctionID()
+	vend := vendorID()
 	if mfi < 0x1 {
 		return 0
 	}
 	rval := uint64(0)
-	_, b, c, d := cpuid(1)
+	_, _, c, d := cpuid(1)
 	if (d & (1 << 15)) != 0 {
 		rval |= CMOV
 	}
@@ -570,25 +788,26 @@ func support() Flags {
 	if (c & (1 << 1)) != 0 {
 		rval |= CLMUL
 	}
+	if c&(1<<23) != 0 {
+		rval |= POPCNT
+	}
 	if c&(1<<30) != 0 {
 		rval |= RDRAND
 	}
 	if c&(1<<29) != 0 {
 		rval |= F16C
 	}
-	if (c & (1 << 28)) != 0 {
-		// This field does not indicate that Hyper-Threading
-		// Technology has been enabled for this specific processor.
-		// To determine if Hyper-Threading Technology is supported,
-		// check the value returned in EBX[23:16]
-		v := (b >> 16) & 255
-		if v > 0 {
+	if c&(1<<13) != 0 {
+		rval |= CX16
+	}
+	if vend == Intel && (d&(1<<28)) != 0 && mfi >= 4 {
+		if threadsPerCore() > 1 {
 			rval |= HTT
 		}
 	}
 
-	// Check OXSAVE and AVX bits
-	if (c & 0x18000000) == 0x18000000 {
+	// Check XGETBV, OXSAVE and AVX bits
+	if c&(1<<26) != 0 && c&(1<<27) != 0 && c&(1<<28) != 0 {
 		// Check for OS support
 		eax, _ := xgetbv(0)
 		if (eax & 0x6) == 0x6 {
@@ -676,8 +895,9 @@ func support() Flags {
 
 	if maxExtendedFunction() >= 0x80000001 {
 		_, _, c, d := cpuid(0x80000001)
-		if (c & 0x00000020) != 0 {
+		if (c & (1 << 5)) != 0 {
 			rval |= LZCNT
+			rval |= POPCNT
 		}
 		if (d & (1 << 31)) != 0 {
 			rval |= AMD3DNOW
@@ -696,6 +916,9 @@ func support() Flags {
 		}
 		if d&(1<<20) != 0 {
 			rval |= NX
+		}
+		if d&(1<<27) != 0 {
+			rval |= RDTSCP
 		}
 
 		/* Allow for selectively disabling SSE2 functions on AMD processors
@@ -758,11 +981,11 @@ func valAsString(values ...uint32) []byte {
 		switch {
 		case dst[0] == 0:
 			return r[:i*4]
-		case r[1] == 0:
+		case dst[1] == 0:
 			return r[:i*4+1]
-		case r[2] == 0:
+		case dst[2] == 0:
 			return r[:i*4+2]
-		case r[3] == 0:
+		case dst[3] == 0:
 			return r[:i*4+3]
 		}
 	}

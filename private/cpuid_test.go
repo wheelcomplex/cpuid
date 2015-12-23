@@ -1,4 +1,6 @@
-// Copyright (c) 2015 Klaus Post, released under MIT License. See LICENSE file.
+// Generated, DO NOT EDIT,
+// but copy it to your own project and rename the package.
+// See more at http://github.com/klauspost/cpuid
 
 package cpuid
 
@@ -14,19 +16,19 @@ func TestCPUID(t *testing.T) {
 	t.Logf("Max Function:0x%x\n", n)
 	n = maxExtendedFunction()
 	t.Logf("Max Extended Function:0x%x\n", n)
-	t.Log("Name:", CPU.BrandName)
-	t.Log("PhysicalCores:", CPU.PhysicalCores)
-	t.Log("ThreadsPerCore:", CPU.ThreadsPerCore)
-	t.Log("LogicalCores:", CPU.LogicalCores)
-	t.Log("Family", CPU.Family, "Model:", CPU.Model)
-	t.Log("Features:", CPU.Features)
-	t.Log("Cacheline bytes:", CPU.CacheLine)
-	t.Log("L1 Instruction Cache:", CPU.Cache.L1I, "bytes")
-	t.Log("L1 Data Cache:", CPU.Cache.L1D, "bytes")
-	t.Log("L2 Cache:", CPU.Cache.L2, "bytes")
-	t.Log("L3 Cache:", CPU.Cache.L3, "bytes")
+	t.Log("Name:", cpu.brandname)
+	t.Log("PhysicalCores:", cpu.physicalcores)
+	t.Log("ThreadsPerCore:", cpu.threadspercore)
+	t.Log("LogicalCores:", cpu.logicalcores)
+	t.Log("Family", cpu.family, "Model:", cpu.model)
+	t.Log("Features:", cpu.features)
+	t.Log("Cacheline bytes:", cpu.cacheline)
+	t.Log("L1 Instruction Cache:", cpu.cache.l1i, "bytes")
+	t.Log("L1 Data Cache:", cpu.cache.l1d, "bytes")
+	t.Log("L2 Cache:", cpu.cache.l2, "bytes")
+	t.Log("L3 Cache:", cpu.cache.l3, "bytes")
 
-	if CPU.SSE2() {
+	if cpu.sse2() {
 		t.Log("We have SSE2")
 	}
 }
@@ -54,26 +56,26 @@ func TestDumpCPUID(t *testing.T) {
 	}
 }
 
-func Example() {
+func example() {
 	// Print basic CPU information:
-	fmt.Println("Name:", CPU.BrandName)
-	fmt.Println("PhysicalCores:", CPU.PhysicalCores)
-	fmt.Println("ThreadsPerCore:", CPU.ThreadsPerCore)
-	fmt.Println("LogicalCores:", CPU.LogicalCores)
-	fmt.Println("Family", CPU.Family, "Model:", CPU.Model)
-	fmt.Println("Features:", CPU.Features)
-	fmt.Println("Cacheline bytes:", CPU.CacheLine)
+	fmt.Println("Name:", cpu.brandname)
+	fmt.Println("PhysicalCores:", cpu.physicalcores)
+	fmt.Println("ThreadsPerCore:", cpu.threadspercore)
+	fmt.Println("LogicalCores:", cpu.logicalcores)
+	fmt.Println("Family", cpu.family, "Model:", cpu.model)
+	fmt.Println("Features:", cpu.features)
+	fmt.Println("Cacheline bytes:", cpu.cacheline)
 
 	// Test if we have a specific feature:
-	if CPU.SSE() {
+	if cpu.sse() {
 		fmt.Println("We have Streaming SIMD Extensions")
 	}
 }
 
 func TestBrandNameZero(t *testing.T) {
-	if len(CPU.BrandName) > 0 {
+	if len(cpu.brandname) > 0 {
 		// Cut out last byte
-		last := []byte(CPU.BrandName[len(CPU.BrandName)-1:])
+		last := []byte(cpu.brandname[len(cpu.brandname)-1:])
 		if last[0] == 0 {
 			t.Fatal("last byte was zero")
 		} else if last[0] == 32 {
@@ -86,8 +88,8 @@ func TestBrandNameZero(t *testing.T) {
 
 // TestCmov tests Cmov() function
 func TestCmov(t *testing.T) {
-	got := CPU.Cmov()
-	expected := CPU.Features&CMOV == CMOV
+	got := cpu.cmov()
+	expected := cpu.features&cmov == cmov
 	if got != expected {
 		t.Fatalf("Cmov: expected %v, got %v", expected, got)
 	}
@@ -96,8 +98,8 @@ func TestCmov(t *testing.T) {
 
 // TestAmd3dnow tests Amd3dnow() function
 func TestAmd3dnow(t *testing.T) {
-	got := CPU.Amd3dnow()
-	expected := CPU.Features&AMD3DNOW == AMD3DNOW
+	got := cpu.amd3dnow()
+	expected := cpu.features&amd3dnow == amd3dnow
 	if got != expected {
 		t.Fatalf("Amd3dnow: expected %v, got %v", expected, got)
 	}
@@ -106,8 +108,8 @@ func TestAmd3dnow(t *testing.T) {
 
 // TestAmd3dnowExt tests Amd3dnowExt() function
 func TestAmd3dnowExt(t *testing.T) {
-	got := CPU.Amd3dnowExt()
-	expected := CPU.Features&AMD3DNOWEXT == AMD3DNOWEXT
+	got := cpu.amd3dnowext()
+	expected := cpu.features&amd3dnowext == amd3dnowext
 	if got != expected {
 		t.Fatalf("Amd3dnowExt: expected %v, got %v", expected, got)
 	}
@@ -116,8 +118,8 @@ func TestAmd3dnowExt(t *testing.T) {
 
 // TestMMX tests MMX() function
 func TestMMX(t *testing.T) {
-	got := CPU.MMX()
-	expected := CPU.Features&MMX == MMX
+	got := cpu.mmx()
+	expected := cpu.features&mmx == mmx
 	if got != expected {
 		t.Fatalf("MMX: expected %v, got %v", expected, got)
 	}
@@ -126,8 +128,8 @@ func TestMMX(t *testing.T) {
 
 // TestMMXext tests MMXext() function
 func TestMMXext(t *testing.T) {
-	got := CPU.MMXExt()
-	expected := CPU.Features&MMXEXT == MMXEXT
+	got := cpu.mmxext()
+	expected := cpu.features&mmxext == mmxext
 	if got != expected {
 		t.Fatalf("MMXExt: expected %v, got %v", expected, got)
 	}
@@ -136,8 +138,8 @@ func TestMMXext(t *testing.T) {
 
 // TestSSE tests SSE() function
 func TestSSE(t *testing.T) {
-	got := CPU.SSE()
-	expected := CPU.Features&SSE == SSE
+	got := cpu.sse()
+	expected := cpu.features&sse == sse
 	if got != expected {
 		t.Fatalf("SSE: expected %v, got %v", expected, got)
 	}
@@ -146,8 +148,8 @@ func TestSSE(t *testing.T) {
 
 // TestSSE2 tests SSE2() function
 func TestSSE2(t *testing.T) {
-	got := CPU.SSE2()
-	expected := CPU.Features&SSE2 == SSE2
+	got := cpu.sse2()
+	expected := cpu.features&sse2 == sse2
 	if got != expected {
 		t.Fatalf("SSE2: expected %v, got %v", expected, got)
 	}
@@ -156,8 +158,8 @@ func TestSSE2(t *testing.T) {
 
 // TestSSE3 tests SSE3() function
 func TestSSE3(t *testing.T) {
-	got := CPU.SSE3()
-	expected := CPU.Features&SSE3 == SSE3
+	got := cpu.sse3()
+	expected := cpu.features&sse3 == sse3
 	if got != expected {
 		t.Fatalf("SSE3: expected %v, got %v", expected, got)
 	}
@@ -166,8 +168,8 @@ func TestSSE3(t *testing.T) {
 
 // TestSSSE3 tests SSSE3() function
 func TestSSSE3(t *testing.T) {
-	got := CPU.SSSE3()
-	expected := CPU.Features&SSSE3 == SSSE3
+	got := cpu.ssse3()
+	expected := cpu.features&ssse3 == ssse3
 	if got != expected {
 		t.Fatalf("SSSE3: expected %v, got %v", expected, got)
 	}
@@ -176,8 +178,8 @@ func TestSSSE3(t *testing.T) {
 
 // TestSSE4 tests SSE4() function
 func TestSSE4(t *testing.T) {
-	got := CPU.SSE4()
-	expected := CPU.Features&SSE4 == SSE4
+	got := cpu.sse4()
+	expected := cpu.features&sse4 == sse4
 	if got != expected {
 		t.Fatalf("SSE4: expected %v, got %v", expected, got)
 	}
@@ -186,8 +188,8 @@ func TestSSE4(t *testing.T) {
 
 // TestSSE42 tests SSE42() function
 func TestSSE42(t *testing.T) {
-	got := CPU.SSE42()
-	expected := CPU.Features&SSE42 == SSE42
+	got := cpu.sse42()
+	expected := cpu.features&sse42 == sse42
 	if got != expected {
 		t.Fatalf("SSE42: expected %v, got %v", expected, got)
 	}
@@ -196,8 +198,8 @@ func TestSSE42(t *testing.T) {
 
 // TestAVX tests AVX() function
 func TestAVX(t *testing.T) {
-	got := CPU.AVX()
-	expected := CPU.Features&AVX == AVX
+	got := cpu.avx()
+	expected := cpu.features&avx == avx
 	if got != expected {
 		t.Fatalf("AVX: expected %v, got %v", expected, got)
 	}
@@ -206,8 +208,8 @@ func TestAVX(t *testing.T) {
 
 // TestAVX2 tests AVX2() function
 func TestAVX2(t *testing.T) {
-	got := CPU.AVX2()
-	expected := CPU.Features&AVX2 == AVX2
+	got := cpu.avx2()
+	expected := cpu.features&avx2 == avx2
 	if got != expected {
 		t.Fatalf("AVX2: expected %v, got %v", expected, got)
 	}
@@ -216,8 +218,8 @@ func TestAVX2(t *testing.T) {
 
 // TestFMA3 tests FMA3() function
 func TestFMA3(t *testing.T) {
-	got := CPU.FMA3()
-	expected := CPU.Features&FMA3 == FMA3
+	got := cpu.fma3()
+	expected := cpu.features&fma3 == fma3
 	if got != expected {
 		t.Fatalf("FMA3: expected %v, got %v", expected, got)
 	}
@@ -226,8 +228,8 @@ func TestFMA3(t *testing.T) {
 
 // TestFMA4 tests FMA4() function
 func TestFMA4(t *testing.T) {
-	got := CPU.FMA4()
-	expected := CPU.Features&FMA4 == FMA4
+	got := cpu.fma4()
+	expected := cpu.features&fma4 == fma4
 	if got != expected {
 		t.Fatalf("FMA4: expected %v, got %v", expected, got)
 	}
@@ -236,8 +238,8 @@ func TestFMA4(t *testing.T) {
 
 // TestXOP tests XOP() function
 func TestXOP(t *testing.T) {
-	got := CPU.XOP()
-	expected := CPU.Features&XOP == XOP
+	got := cpu.xop()
+	expected := cpu.features&xop == xop
 	if got != expected {
 		t.Fatalf("XOP: expected %v, got %v", expected, got)
 	}
@@ -246,8 +248,8 @@ func TestXOP(t *testing.T) {
 
 // TestF16C tests F16C() function
 func TestF16C(t *testing.T) {
-	got := CPU.F16C()
-	expected := CPU.Features&F16C == F16C
+	got := cpu.f16c()
+	expected := cpu.features&f16c == f16c
 	if got != expected {
 		t.Fatalf("F16C: expected %v, got %v", expected, got)
 	}
@@ -256,8 +258,8 @@ func TestF16C(t *testing.T) {
 
 // TestCX16 tests CX16() function
 func TestCX16(t *testing.T) {
-	got := CPU.CX16()
-	expected := CPU.Features&CX16 == CX16
+	got := cpu.cx16()
+	expected := cpu.features&cx16 == cx16
 	if got != expected {
 		t.Fatalf("CX16: expected %v, got %v", expected, got)
 	}
@@ -266,8 +268,8 @@ func TestCX16(t *testing.T) {
 
 // TestBMI1 tests BMI1() function
 func TestBMI1(t *testing.T) {
-	got := CPU.BMI1()
-	expected := CPU.Features&BMI1 == BMI1
+	got := cpu.bmi1()
+	expected := cpu.features&bmi1 == bmi1
 	if got != expected {
 		t.Fatalf("BMI1: expected %v, got %v", expected, got)
 	}
@@ -276,8 +278,8 @@ func TestBMI1(t *testing.T) {
 
 // TestBMI2 tests BMI2() function
 func TestBMI2(t *testing.T) {
-	got := CPU.BMI2()
-	expected := CPU.Features&BMI2 == BMI2
+	got := cpu.bmi2()
+	expected := cpu.features&bmi2 == bmi2
 	if got != expected {
 		t.Fatalf("BMI2: expected %v, got %v", expected, got)
 	}
@@ -286,8 +288,8 @@ func TestBMI2(t *testing.T) {
 
 // TestTBM tests TBM() function
 func TestTBM(t *testing.T) {
-	got := CPU.TBM()
-	expected := CPU.Features&TBM == TBM
+	got := cpu.tbm()
+	expected := cpu.features&tbm == tbm
 	if got != expected {
 		t.Fatalf("TBM: expected %v, got %v", expected, got)
 	}
@@ -296,8 +298,8 @@ func TestTBM(t *testing.T) {
 
 // TestLzcnt tests Lzcnt() function
 func TestLzcnt(t *testing.T) {
-	got := CPU.Lzcnt()
-	expected := CPU.Features&LZCNT == LZCNT
+	got := cpu.lzcnt()
+	expected := cpu.features&lzcnt == lzcnt
 	if got != expected {
 		t.Fatalf("Lzcnt: expected %v, got %v", expected, got)
 	}
@@ -306,8 +308,8 @@ func TestLzcnt(t *testing.T) {
 
 // TestLzcnt tests Lzcnt() function
 func TestPopcnt(t *testing.T) {
-	got := CPU.Popcnt()
-	expected := CPU.Features&POPCNT == POPCNT
+	got := cpu.popcnt()
+	expected := cpu.features&popcnt == popcnt
 	if got != expected {
 		t.Fatalf("Popcnt: expected %v, got %v", expected, got)
 	}
@@ -316,8 +318,8 @@ func TestPopcnt(t *testing.T) {
 
 // TestAesNi tests AesNi() function
 func TestAesNi(t *testing.T) {
-	got := CPU.AesNi()
-	expected := CPU.Features&AESNI == AESNI
+	got := cpu.aesni()
+	expected := cpu.features&aesni == aesni
 	if got != expected {
 		t.Fatalf("AesNi: expected %v, got %v", expected, got)
 	}
@@ -326,8 +328,8 @@ func TestAesNi(t *testing.T) {
 
 // TestHTT tests HTT() function
 func TestHTT(t *testing.T) {
-	got := CPU.HTT()
-	expected := CPU.Features&HTT == HTT
+	got := cpu.htt()
+	expected := cpu.features&htt == htt
 	if got != expected {
 		t.Fatalf("HTT: expected %v, got %v", expected, got)
 	}
@@ -336,8 +338,8 @@ func TestHTT(t *testing.T) {
 
 // TestClmul tests Clmul() function
 func TestClmul(t *testing.T) {
-	got := CPU.Clmul()
-	expected := CPU.Features&CLMUL == CLMUL
+	got := cpu.clmul()
+	expected := cpu.features&clmul == clmul
 	if got != expected {
 		t.Fatalf("Clmul: expected %v, got %v", expected, got)
 	}
@@ -346,8 +348,8 @@ func TestClmul(t *testing.T) {
 
 // TestSSE2Slow tests SSE2Slow() function
 func TestSSE2Slow(t *testing.T) {
-	got := CPU.SSE2Slow()
-	expected := CPU.Features&SSE2SLOW == SSE2SLOW
+	got := cpu.sse2slow()
+	expected := cpu.features&sse2slow == sse2slow
 	if got != expected {
 		t.Fatalf("SSE2Slow: expected %v, got %v", expected, got)
 	}
@@ -356,8 +358,8 @@ func TestSSE2Slow(t *testing.T) {
 
 // TestSSE3Slow tests SSE3slow() function
 func TestSSE3Slow(t *testing.T) {
-	got := CPU.SSE3Slow()
-	expected := CPU.Features&SSE3SLOW == SSE3SLOW
+	got := cpu.sse3slow()
+	expected := cpu.features&sse3slow == sse3slow
 	if got != expected {
 		t.Fatalf("SSE3slow: expected %v, got %v", expected, got)
 	}
@@ -366,8 +368,8 @@ func TestSSE3Slow(t *testing.T) {
 
 // TestAtom tests Atom() function
 func TestAtom(t *testing.T) {
-	got := CPU.Atom()
-	expected := CPU.Features&ATOM == ATOM
+	got := cpu.atom()
+	expected := cpu.features&atom == atom
 	if got != expected {
 		t.Fatalf("Atom: expected %v, got %v", expected, got)
 	}
@@ -376,8 +378,8 @@ func TestAtom(t *testing.T) {
 
 // TestNX tests NX() function (NX (No-Execute) bit)
 func TestNX(t *testing.T) {
-	got := CPU.NX()
-	expected := CPU.Features&NX == NX
+	got := cpu.nx()
+	expected := cpu.features&nx == nx
 	if got != expected {
 		t.Fatalf("NX: expected %v, got %v", expected, got)
 	}
@@ -386,8 +388,8 @@ func TestNX(t *testing.T) {
 
 // TestSSE4A tests SSE4A() function (AMD Barcelona microarchitecture SSE4a instructions)
 func TestSSE4A(t *testing.T) {
-	got := CPU.SSE4A()
-	expected := CPU.Features&SSE4A == SSE4A
+	got := cpu.sse4a()
+	expected := cpu.features&sse4a == sse4a
 	if got != expected {
 		t.Fatalf("SSE4A: expected %v, got %v", expected, got)
 	}
@@ -396,8 +398,8 @@ func TestSSE4A(t *testing.T) {
 
 // TestHLE tests HLE() function (Hardware Lock Elision)
 func TestHLE(t *testing.T) {
-	got := CPU.HLE()
-	expected := CPU.Features&HLE == HLE
+	got := cpu.hle()
+	expected := cpu.features&hle == hle
 	if got != expected {
 		t.Fatalf("HLE: expected %v, got %v", expected, got)
 	}
@@ -406,8 +408,8 @@ func TestHLE(t *testing.T) {
 
 // TestRTM tests RTM() function (Restricted Transactional Memory)
 func TestRTM(t *testing.T) {
-	got := CPU.RTM()
-	expected := CPU.Features&RTM == RTM
+	got := cpu.rtm()
+	expected := cpu.features&rtm == rtm
 	if got != expected {
 		t.Fatalf("RTM: expected %v, got %v", expected, got)
 	}
@@ -416,8 +418,8 @@ func TestRTM(t *testing.T) {
 
 // TestRdrand tests RDRAND() function (RDRAND instruction is available)
 func TestRdrand(t *testing.T) {
-	got := CPU.Rdrand()
-	expected := CPU.Features&RDRAND == RDRAND
+	got := cpu.rdrand()
+	expected := cpu.features&rdrand == rdrand
 	if got != expected {
 		t.Fatalf("Rdrand: expected %v, got %v", expected, got)
 	}
@@ -426,8 +428,8 @@ func TestRdrand(t *testing.T) {
 
 // TestRdseed tests RDSEED() function (RDSEED instruction is available)
 func TestRdseed(t *testing.T) {
-	got := CPU.Rdseed()
-	expected := CPU.Features&RDSEED == RDSEED
+	got := cpu.rdseed()
+	expected := cpu.features&rdseed == rdseed
 	if got != expected {
 		t.Fatalf("Rdseed: expected %v, got %v", expected, got)
 	}
@@ -436,8 +438,8 @@ func TestRdseed(t *testing.T) {
 
 // TestADX tests ADX() function (Intel ADX (Multi-Precision Add-Carry Instruction Extensions))
 func TestADX(t *testing.T) {
-	got := CPU.ADX()
-	expected := CPU.Features&ADX == ADX
+	got := cpu.adx()
+	expected := cpu.features&adx == adx
 	if got != expected {
 		t.Fatalf("ADX: expected %v, got %v", expected, got)
 	}
@@ -446,8 +448,8 @@ func TestADX(t *testing.T) {
 
 // TestSHA tests SHA() function (Intel SHA Extensions)
 func TestSHA(t *testing.T) {
-	got := CPU.SHA()
-	expected := CPU.Features&SHA == SHA
+	got := cpu.sha()
+	expected := cpu.features&sha == sha
 	if got != expected {
 		t.Fatalf("SHA: expected %v, got %v", expected, got)
 	}
@@ -456,8 +458,8 @@ func TestSHA(t *testing.T) {
 
 // TestAVX512F tests AVX512F() function (AVX-512 Foundation)
 func TestAVX512F(t *testing.T) {
-	got := CPU.AVX512F()
-	expected := CPU.Features&AVX512F == AVX512F
+	got := cpu.avx512f()
+	expected := cpu.features&avx512f == avx512f
 	if got != expected {
 		t.Fatalf("AVX512F: expected %v, got %v", expected, got)
 	}
@@ -466,8 +468,8 @@ func TestAVX512F(t *testing.T) {
 
 // TestAVX512DQ tests AVX512DQ() function (AVX-512 Doubleword and Quadword Instructions)
 func TestAVX512DQ(t *testing.T) {
-	got := CPU.AVX512DQ()
-	expected := CPU.Features&AVX512DQ == AVX512DQ
+	got := cpu.avx512dq()
+	expected := cpu.features&avx512dq == avx512dq
 	if got != expected {
 		t.Fatalf("AVX512DQ: expected %v, got %v", expected, got)
 	}
@@ -476,8 +478,8 @@ func TestAVX512DQ(t *testing.T) {
 
 // TestAVX512IFMA tests AVX512IFMA() function (AVX-512 Integer Fused Multiply-Add Instructions)
 func TestAVX512IFMA(t *testing.T) {
-	got := CPU.AVX512IFMA()
-	expected := CPU.Features&AVX512IFMA == AVX512IFMA
+	got := cpu.avx512ifma()
+	expected := cpu.features&avx512ifma == avx512ifma
 	if got != expected {
 		t.Fatalf("AVX512IFMA: expected %v, got %v", expected, got)
 	}
@@ -486,8 +488,8 @@ func TestAVX512IFMA(t *testing.T) {
 
 // TestAVX512PF tests AVX512PF() function (AVX-512 Prefetch Instructions)
 func TestAVX512PF(t *testing.T) {
-	got := CPU.AVX512PF()
-	expected := CPU.Features&AVX512PF == AVX512PF
+	got := cpu.avx512pf()
+	expected := cpu.features&avx512pf == avx512pf
 	if got != expected {
 		t.Fatalf("AVX512PF: expected %v, got %v", expected, got)
 	}
@@ -496,8 +498,8 @@ func TestAVX512PF(t *testing.T) {
 
 // TestAVX512ER tests AVX512ER() function (AVX-512 Exponential and Reciprocal Instructions)
 func TestAVX512ER(t *testing.T) {
-	got := CPU.AVX512ER()
-	expected := CPU.Features&AVX512ER == AVX512ER
+	got := cpu.avx512er()
+	expected := cpu.features&avx512er == avx512er
 	if got != expected {
 		t.Fatalf("AVX512ER: expected %v, got %v", expected, got)
 	}
@@ -506,8 +508,8 @@ func TestAVX512ER(t *testing.T) {
 
 // TestAVX512CD tests AVX512CD() function (AVX-512 Conflict Detection Instructions)
 func TestAVX512CD(t *testing.T) {
-	got := CPU.AVX512CD()
-	expected := CPU.Features&AVX512CD == AVX512CD
+	got := cpu.avx512cd()
+	expected := cpu.features&avx512cd == avx512cd
 	if got != expected {
 		t.Fatalf("AVX512CD: expected %v, got %v", expected, got)
 	}
@@ -516,8 +518,8 @@ func TestAVX512CD(t *testing.T) {
 
 // TestAVX512BW tests AVX512BW() function (AVX-512 Byte and Word Instructions)
 func TestAVX512BW(t *testing.T) {
-	got := CPU.AVX512BW()
-	expected := CPU.Features&AVX512BW == AVX512BW
+	got := cpu.avx512bw()
+	expected := cpu.features&avx512bw == avx512bw
 	if got != expected {
 		t.Fatalf("AVX512BW: expected %v, got %v", expected, got)
 	}
@@ -526,8 +528,8 @@ func TestAVX512BW(t *testing.T) {
 
 // TestAVX512VL tests AVX512VL() function (AVX-512 Vector Length Extensions)
 func TestAVX512VL(t *testing.T) {
-	got := CPU.AVX512VL()
-	expected := CPU.Features&AVX512VL == AVX512VL
+	got := cpu.avx512vl()
+	expected := cpu.features&avx512vl == avx512vl
 	if got != expected {
 		t.Fatalf("AVX512VL: expected %v, got %v", expected, got)
 	}
@@ -536,8 +538,8 @@ func TestAVX512VL(t *testing.T) {
 
 // TestAVX512VL tests AVX512VBMI() function (AVX-512 Vector Bit Manipulation Instructions)
 func TestAVX512VBMI(t *testing.T) {
-	got := CPU.AVX512VBMI()
-	expected := CPU.Features&AVX512VBMI == AVX512VBMI
+	got := cpu.avx512vbmi()
+	expected := cpu.features&avx512vbmi == avx512vbmi
 	if got != expected {
 		t.Fatalf("AVX512VBMI: expected %v, got %v", expected, got)
 	}
@@ -546,8 +548,8 @@ func TestAVX512VBMI(t *testing.T) {
 
 // TestMPX tests MPX() function (Intel MPX (Memory Protection Extensions))
 func TestMPX(t *testing.T) {
-	got := CPU.MPX()
-	expected := CPU.Features&MPX == MPX
+	got := cpu.mpx()
+	expected := cpu.features&mpx == mpx
 	if got != expected {
 		t.Fatalf("MPX: expected %v, got %v", expected, got)
 	}
@@ -556,8 +558,8 @@ func TestMPX(t *testing.T) {
 
 // TestERMS tests ERMS() function (Enhanced REP MOVSB/STOSB)
 func TestERMS(t *testing.T) {
-	got := CPU.ERMS()
-	expected := CPU.Features&ERMS == ERMS
+	got := cpu.erms()
+	expected := cpu.features&erms == erms
 	if got != expected {
 		t.Fatalf("ERMS: expected %v, got %v", expected, got)
 	}
@@ -566,13 +568,13 @@ func TestERMS(t *testing.T) {
 
 // TestVendor writes the detected vendor. Will be 0 if unknown
 func TestVendor(t *testing.T) {
-	t.Log("Vendor ID:", CPU.VendorID)
+	t.Log("Vendor ID:", cpu.vendorid)
 }
 
 // Intel returns true if vendor is recognized as Intel
 func TestIntel(t *testing.T) {
-	got := CPU.Intel()
-	expected := CPU.VendorID == Intel
+	got := cpu.intel()
+	expected := cpu.vendorid == intel
 	if got != expected {
 		t.Fatalf("TestIntel: expected %v, got %v", expected, got)
 	}
@@ -581,8 +583,8 @@ func TestIntel(t *testing.T) {
 
 // AMD returns true if vendor is recognized as AMD
 func TestAMD(t *testing.T) {
-	got := CPU.AMD()
-	expected := CPU.VendorID == AMD
+	got := cpu.amd()
+	expected := cpu.vendorid == amd
 	if got != expected {
 		t.Fatalf("TestAMD: expected %v, got %v", expected, got)
 	}
@@ -591,8 +593,8 @@ func TestAMD(t *testing.T) {
 
 // Transmeta returns true if vendor is recognized as Transmeta
 func TestTransmeta(t *testing.T) {
-	got := CPU.Transmeta()
-	expected := CPU.VendorID == Transmeta
+	got := cpu.transmeta()
+	expected := cpu.vendorid == transmeta
 	if got != expected {
 		t.Fatalf("TestTransmeta: expected %v, got %v", expected, got)
 	}
@@ -601,8 +603,8 @@ func TestTransmeta(t *testing.T) {
 
 // NSC returns true if vendor is recognized as National Semiconductor
 func TestNSC(t *testing.T) {
-	got := CPU.NSC()
-	expected := CPU.VendorID == NSC
+	got := cpu.nsc()
+	expected := cpu.vendorid == nsc
 	if got != expected {
 		t.Fatalf("TestNSC: expected %v, got %v", expected, got)
 	}
@@ -611,8 +613,8 @@ func TestNSC(t *testing.T) {
 
 // VIA returns true if vendor is recognized as VIA
 func TestVIA(t *testing.T) {
-	got := CPU.VIA()
-	expected := CPU.VendorID == VIA
+	got := cpu.via()
+	expected := cpu.vendorid == via
 	if got != expected {
 		t.Fatalf("TestVIA: expected %v, got %v", expected, got)
 	}
@@ -621,19 +623,19 @@ func TestVIA(t *testing.T) {
 
 // Test VM function
 func TestVM(t *testing.T) {
-	t.Log("Vendor ID:", CPU.VM())
+	t.Log("Vendor ID:", cpu.vm())
 }
 
 // Test RTCounter function
 func TestRtCounter(t *testing.T) {
-	a := CPU.RTCounter()
-	b := CPU.RTCounter()
+	a := cpu.rtcounter()
+	b := cpu.rtcounter()
 	t.Log("CPU Counter:", a, b, b-a)
 }
 
 // Prints the value of Ia32TscAux()
 func TestIa32TscAux(t *testing.T) {
-	ecx := CPU.Ia32TscAux()
+	ecx := cpu.ia32tscaux()
 	t.Logf("Ia32TscAux:0x%x\n", ecx)
 	if ecx != 0 {
 		chip := (ecx & 0xFFF000) >> 12
@@ -643,31 +645,31 @@ func TestIa32TscAux(t *testing.T) {
 }
 
 func TestThreadsPerCoreNZ(t *testing.T) {
-	if CPU.ThreadsPerCore == 0 {
+	if cpu.threadspercore == 0 {
 		t.Fatal("threads per core is zero")
 	}
 }
 
 // Prints the value of LogicalCPU()
 func TestLogicalCPU(t *testing.T) {
-	t.Log("Currently executing on cpu:", CPU.LogicalCPU())
+	t.Log("Currently executing on cpu:", cpu.logicalcpu())
 }
 
 func TestMaxFunction(t *testing.T) {
 	expect := maxFunctionID()
-	if CPU.maxFunc != expect {
-		t.Fatal("Max function does not match, expected", expect, "but got", CPU.maxFunc)
+	if cpu.maxFunc != expect {
+		t.Fatal("Max function does not match, expected", expect, "but got", cpu.maxFunc)
 	}
 	expect = maxExtendedFunction()
-	if CPU.maxExFunc != expect {
-		t.Fatal("Max Extended function does not match, expected", expect, "but got", CPU.maxFunc)
+	if cpu.maxExFunc != expect {
+		t.Fatal("Max Extended function does not match, expected", expect, "but got", cpu.maxFunc)
 	}
 }
 
 // This example will calculate the chip/core number on Linux
 // Linux encodes numa id (<<12) and core id (8bit) into TSC_AUX.
-func ExampleCPUInfo_Ia32TscAux(t *testing.T) {
-	ecx := CPU.Ia32TscAux()
+func examplecpuinfo_ia32tscaux(t *testing.T) {
+	ecx := cpu.ia32tscaux()
 	if ecx == 0 {
 		fmt.Println("Unknown CPU ID")
 		return
